@@ -1,0 +1,41 @@
+[gd_scene load_steps=10 format=3 uid="uid://bvty251dpl3ms"]
+
+[ext_resource type="Script" path="res://scripts/launcher._main.gd" id="1_ap456"]
+[ext_resource type="Texture2D" uid="uid://bm0mmt4ulydqx" path="res://icon.svg" id="1_qfa3v"]
+[ext_resource type="PackedScene" uid="uid://dlxi8x2yr1iyb" path="res://player.tscn" id="2_hgyoj"]
+[ext_resource type="PackedScene" uid="uid://dci17n0stw0oi" path="res://Plane.tscn" id="3_puvay"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_sw1ve"]
+friction = 0.75
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_uovgj"]
+size = Vector3(20, 0.005, 20)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fcdjt"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_rfj6y"]
+material = SubResource("StandardMaterial3D_fcdjt")
+size = Vector2(1000, 1000)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wek21"]
+albedo_texture = ExtResource("1_qfa3v")
+metallic = 0.1
+roughness = 0.85
+
+[node name="World" type="Node3D"]
+script = ExtResource("1_ap456")
+player_scene = ExtResource("2_hgyoj")
+plane_scene = ExtResource("3_puvay")
+
+[node name="Ground" type="StaticBody3D" parent="."]
+collision_layer = 3
+collision_mask = 3
+physics_material_override = SubResource("PhysicsMaterial_sw1ve")
+
+[node name="Ground_Collider" type="CollisionShape3D" parent="Ground"]
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, 0, 0)
+shape = SubResource("BoxShape3D_uovgj")
+
+[node name="Ground_texture" type="CSGMesh3D" parent="Ground"]
+mesh = SubResource("PlaneMesh_rfj6y")
+material = SubResource("StandardMaterial3D_wek21")

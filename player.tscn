@@ -1,0 +1,62 @@
+[gd_scene load_steps=6 format=3 uid="uid://dlxi8x2yr1iyb"]
+
+[ext_resource type="Script" path="res://scripts/player_main.gd" id="1_y7sy4"]
+[ext_resource type="Environment" uid="uid://dgprbal832kg7" path="res://meshs/world_meshes/world_env.tres" id="2_aew54"]
+[ext_resource type="PhysicsMaterial" uid="uid://0rg6nh5alssl" path="res://meshs/mesh_objects/player_physics_material.tres" id="2_ju4bm"]
+[ext_resource type="Shape3D" uid="uid://cni763va2mhdl" path="res://meshs/mesh_objects/player_collider.tres" id="2_wpshx"]
+[ext_resource type="Script" path="res://scripts/player_camera_gui_main.gd" id="5_omvbk"]
+
+[node name="Player" type="CharacterBody3D"]
+rotation_edit_mode = 1
+collision_layer = 0
+collision_mask = 0
+floor_max_angle = 0.872665
+script = ExtResource("1_y7sy4")
+
+[node name="Player_Shape" type="CollisionShape3D" parent="."]
+rotation_edit_mode = 1
+shape = ExtResource("2_wpshx")
+
+[node name="Player_Object" type="RigidBody3D" parent="."]
+collision_layer = 2
+collision_mask = 2
+mass = 25.0
+physics_material_override = ExtResource("2_ju4bm")
+
+[node name="Player_Collider" type="CollisionShape3D" parent="Player_Object"]
+rotation_edit_mode = 1
+shape = ExtResource("2_wpshx")
+
+[node name="Player_Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+rotation_edit_mode = 1
+environment = ExtResource("2_aew54")
+current = true
+far = 10000.0
+
+[node name="Player_Camera_GUI" type="Control" parent="Player_Camera"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_omvbk")
+
+[node name="FTPS" type="Label" parent="Player_Camera/Player_Camera_GUI"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="TPS" type="Label" parent="Player_Camera/Player_Camera_GUI"]
+layout_mode = 0
+offset_top = 22.0
+offset_right = 40.0
+offset_bottom = 45.0
+
+[node name="FPS" type="Label" parent="Player_Camera/Player_Camera_GUI"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 45.0
+offset_right = 42.0
+offset_bottom = 68.0
