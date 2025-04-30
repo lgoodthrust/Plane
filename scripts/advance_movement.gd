@@ -57,12 +57,18 @@ func get_offset_position(origin: Vector3, basis: Basis, local_offset: Vector3) -
 	return transform * local_offset
 
 # Returns a torque vector to rotate an object so its forward axis points toward a target position
-func torque_to_position(object: RigidBody3D, target: Vector3, P=12.0, D=2.0) -> Vector3:
+func torque_to_position(
+	object: RigidBody3D,
+	target: Vector3,
+	forward:Vector3=-Vector3.FORWARD,
+	P:float=12.0,
+	D:float=2.0
+	) -> Vector3:
 	# Desired world-space direction (unit)
 	var to_target: Vector3 = (target - object.global_transform.origin).normalized()
 	
 	# Current world-space direction of the chosen local vector (unit)
-	var v_current: Vector3 = (object.global_transform.basis * Vector3.FORWARD).normalized()
+	var v_current: Vector3 = (object.global_transform.basis * forward).normalized()
 	
 	# Angle error
 	var dot_val: float = clamp(v_current.dot(to_target), -1.0, 1.0)

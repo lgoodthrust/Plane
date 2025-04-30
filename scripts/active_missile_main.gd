@@ -42,7 +42,7 @@ func _ready() -> void:
 
 var prev_vel: Vector3 = Vector3.ZERO
 var vec: Vector3 = Vector3.ZERO
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	if player_cam == null:
 		player_cam = get_tree().root.get_child(0).get_node("Player/Player_Camera")
 	else:
@@ -65,6 +65,7 @@ func _physics_process(delta: float) -> void:
 	var A = 0.1
 	var B = 0.1
 	var C = 100.0
+	var D = 5.0
 	
 	if speed > 0.1:
 		var vel_dir = linear_velocity.normalized()
@@ -84,7 +85,8 @@ func _physics_process(delta: float) -> void:
 		var aim_dir = -player_cam.global_transform.basis.z
 		var target_position = (player_cam.global_position + aim_dir * 1000.0)
 		
-		var steer = get_alignment_torque(target_position) * mass * C
+		var steer = adv_move.torque_to_position(self, target_position) * mass * C
+		var anti_roll = roll_pd(0.0) * mass * D
 	
 		if speed > 0.1:
 			var vel_dir = linear_velocity.normalized()
@@ -94,38 +96,9 @@ func _physics_process(delta: float) -> void:
 			var delta_vel_q = vel_quat * body_quat.inverse()
 			vec = delta_vel_q.get_axis().normalized() * delta_vel_q.get_angle() * B * mass
 		
-		apply_torque(steer + vec)
+		apply_torque(steer + vec + anti_roll)
 	
 	prev_vel = linear_velocity
-
-func get_alignment_torque(target: Vector3) -> Vector3:
-	# Desired world-space direction (unit)
-	var to_target: Vector3 = (target - global_transform.origin).normalized()
-	
-	# Current world-space direction of the chosen local vector (unit)
-	var v_current: Vector3 = (global_transform.basis * Vector3.BACK).normalized()
-	
-	# Angle error
-	var dot_val: float = clamp(v_current.dot(to_target), -1.0, 1.0)
-	var angle_err: float = acos(dot_val)            # radians  (0‥π)
-	if angle_err < 1e-5:
-		return Vector3.ZERO                         # already aligned
-	
-	# Rotation axis (handle the 180° anti-parallel case)
-	var axis: Vector3 = v_current.cross(to_target)
-	if axis.length_squared() < 1e-8:                # vectors are opposite
-		axis = v_current.cross(Vector3.RIGHT)
-		if axis.length_squared() < 1e-8:
-			axis = v_current.cross(Vector3.UP)
-	axis = axis.normalized()
-	
-	# Proportional term (τ = k_p · θ · axis)
-	var torque_p: Vector3 = axis * angle_err * 12.0
-	
-	# Derivative term (damp current spin around *any* axis)
-	var torque_d: Vector3 = -angular_velocity * 2.0
-	
-	return torque_p + torque_d
 
 func roll_pd(target_roll: float, kp: float = 12.0, kd: float = 3.0) -> Vector3:
 	var f = global_transform.basis.z.normalized()
