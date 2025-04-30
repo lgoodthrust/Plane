@@ -46,7 +46,7 @@ func _physics_process(_delta: float) -> void:
 	if player_cam == null:
 		player_cam = get_tree().root.get_child(0).get_node("Player/Player_Camera")
 	else:
-		cam_pos = adv_move.get_offset_position(global_position, global_basis, Vector3(0, 5, 0))
+		cam_pos = adv_move.get_offset_position(global_position, global_basis, Vector3(0, 0, 0))
 	
 	# Godot forward is -Z
 	var FORWARD = basis.z
@@ -65,7 +65,7 @@ func _physics_process(_delta: float) -> void:
 	var A = 0.1
 	var B = 0.1
 	var C = 100.0
-	var D = 5.0
+	var D = 50.0
 	
 	if speed > 0.1:
 		var vel_dir = linear_velocity.normalized()
@@ -100,7 +100,7 @@ func _physics_process(_delta: float) -> void:
 	
 	prev_vel = linear_velocity
 
-func roll_pd(target_roll: float, kp: float = 12.0, kd: float = 3.0) -> Vector3:
+func roll_pd(target_roll: float, kp: float = 10.0, kd: float = 2.0) -> Vector3:
 	var f = global_transform.basis.z.normalized()
 	var r = f.cross(Vector3.UP)
 	if r.length_squared() < 1e-4:

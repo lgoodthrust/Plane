@@ -173,10 +173,10 @@ func toggle_slomo(enable):
 		Engine.time_scale = 1.0
 
 func toggle_zoom(enable):
-	if enable and Camera.fov == 75.0:
+	if enable and Camera.fov == 90.0:
 		Camera.fov = 15.0
 	if not enable and Camera.fov == 15.0:
-		Camera.fov = 75.0
+		Camera.fov = 90.0
 
 var back_step1 := false
 func plane_mode(enabled: bool):
@@ -189,6 +189,7 @@ func plane_mode(enabled: bool):
 				msl_follow_tog = true
 				back_step1 = false
 				noclip_tog = false
+				set_collision_layer_value(1, false)
 			else:
 				disable_follow()
 		else:
@@ -196,6 +197,7 @@ func plane_mode(enabled: bool):
 			back_step1 = true
 	else:
 		if not back_step1:
+			set_collision_layer_value(1, true)
 			reset_position()
 
 func reset_position():
