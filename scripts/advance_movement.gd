@@ -7,19 +7,19 @@ extends RefCounted
 func torque_to_pos(delta:float, current_object:Node3D, current_forward_axis:Vector3, target_global_position:Vector3) -> Vector3:
 	var co_go = current_object.global_transform.origin
 	var co_fgb = current_object.global_transform.basis * current_forward_axis
-
+	
 	# Get direction vector to target
 	var to_target = (target_global_position - co_go).normalized()
-
+	
 	# Compute the rotation axis using the cross product
 	var rotation_axis = co_fgb.cross(to_target).normalized()
-
+	
 	# Compute the angle between the forward direction and the target direction
 	var angle = co_fgb.angle_to(to_target)
-
+	
 	# Compute torque (proportional to angle & frame time)
 	var torque = rotation_axis * angle * delta
-
+	
 	# Handle edge cases (no rotation needed or invalid axis)
 	if rotation_axis.is_zero_approx():
 		return Vector3.ZERO  # No rotation needed
@@ -27,7 +27,6 @@ func torque_to_pos(delta:float, current_object:Node3D, current_forward_axis:Vect
 	var output = torque
 	
 	return output
-
 
 # returns vector3 force that can be applied to an "apply_force()" function
 # returns the "force stuff" that will apply a force that to move an object to its forward vector3
@@ -52,37 +51,63 @@ func force_to_forward(delta:float, current_object:Node3D, current_forward_axis:V
 	
 	return output
 
-
 func get_offset_position(origin: Vector3, basis: Basis, local_offset: Vector3) -> Vector3:
 	var transform = Transform3D(basis, origin)
 	return transform * local_offset
 
-
 # Returns a torque vector to rotate an object so its forward axis points toward a target position
-func torque_to_position(current_object: Node3D, current_forward_axis: Vector3, target_global_position: Vector3) -> Vector3:
-	var obj_pos = current_object.global_transform.origin
-	var forward_vec = current_object.global_transform.basis * current_forward_axis
+func torque_to_position(
+	xform: Transform3D,
+	forward_axis: Vector3,
+	target_position: Vector3
+) -> Vector3:
+	var to_target = (target_position - xform.origin).normalized()
 	
-	var to_target = (target_global_position - obj_pos).normalized()
+	# Build desired basis manually (avoids gimbal lock entirely)
+	var desired_forward = to_target
+	var desired_right = forward_axis.cross(desired_forward).normalized()
+	if desired_right.length_squared() < 1e-4:
+		return Vector3.ZERO               # Degenerate (looking straight up/down)
+	var desired_up = desired_forward.cross(desired_right).normalized()
+	var desired_basis = Basis(desired_right, desired_up, desired_forward)
 	
-	var axis = forward_vec.cross(to_target)
-	var angle = forward_vec.angle_to(to_target)
+	var current_quat = Quaternion(xform.basis.orthonormalized())
+	var desired_quat = Quaternion(desired_basis.orthonormalized())
+	var delta_quat = desired_quat * current_quat.inverse()
 	
-	if axis.length() < 0.001 or angle < 0.001:
-		return Vector3.ZERO  # Already aligned or no meaningful rotation
+	var axis = delta_quat.get_axis().normalized()
+	var angle = delta_quat.get_angle()
+	var raw_steer = axis * angle
 	
-	# Apply torque in the direction of rotation, scaled by angle and delta
-	var torque = axis.normalized() * angle
+	var current_right = xform.basis.x.normalized()
+	var yaw_component = forward_axis * raw_steer.dot(forward_axis)
+	var pitch_component = current_right * raw_steer.dot(current_right)
+	var steer_torque = yaw_component + pitch_component
 	
-	return torque
-
+	var current_up = xform.basis.y.normalized()
+	var dot_up = clamp(current_up.dot(Vector3.UP), -1.0, 1.0)
+	
+	var roll_axis: Vector3
+	var roll_angle: float
+	if dot_up > 0.9999:
+		roll_axis = Vector3.ZERO
+		roll_angle = 0.0
+	elif dot_up < -0.9999:
+		roll_axis = forward_axis.normalized()
+		roll_angle = PI
+	else:
+		roll_axis = current_up.cross(Vector3.UP).normalized()
+		roll_angle = acos(dot_up)
+	
+	var roll_torque = roll_axis * roll_angle if roll_axis.length_squared() > 1e-4 else Vector3.ZERO
+	
+	return steer_torque + roll_torque
 
 # returns vector3 torque that can be applied to an "apply_torque()" function
 # returns the "torque stuff" that will rotate an object toward a vector3
 func forward_to_force(delta:float, current_object:RigidBody3D, current_forward_axis:Vector3) -> Vector3:
 	var co_fgb = current_object.global_transform.basis * current_forward_axis
 	var co_velvec = current_object.linear_velocity.normalized()
-
 
 	# Compute the rotation axis using the cross product
 	var rotation_axis = co_fgb.cross(co_velvec).normalized()
@@ -101,7 +126,6 @@ func forward_to_force(delta:float, current_object:RigidBody3D, current_forward_a
 	
 	return output
 
-
 # returns vector3 roll, pitch, and yaw of an object
 # returns roll pitch and yaw angles of an object
 func forward_rpy(current_object:Node3D, current_forward_axis:Vector3) -> Vector3:
@@ -119,7 +143,6 @@ func forward_rpy(current_object:Node3D, current_forward_axis:Vector3) -> Vector3
 	var output = Vector3(r, p, y)
 	
 	return output
-
 
 # return the x,y angle of a of an object reletive to the forward direction of another object
 func get_target_angles_in_degrees(current_object: Node3D, current_forward_axis: Vector3, current_right_axis: Vector3, current_up_axis: Vector3, target: Node3D) -> Vector2:
