@@ -51,57 +51,40 @@ func force_to_forward(delta:float, current_object:Node3D, current_forward_axis:V
 	
 	return output
 
+# rot pos offset
 func get_offset_position(origin: Vector3, basis: Basis, local_offset: Vector3) -> Vector3:
 	var transform = Transform3D(basis, origin)
 	return transform * local_offset
 
 # Returns a torque vector to rotate an object so its forward axis points toward a target position
-func torque_to_position(
-	xform: Transform3D,
-	forward_axis: Vector3,
-	target_position: Vector3
-) -> Vector3:
-	var to_target = (target_position - xform.origin).normalized()
+func torque_to_position(object: RigidBody3D, target: Vector3, P=12.0, D=2.0) -> Vector3:
+	# Desired world-space direction (unit)
+	var to_target: Vector3 = (target - object.global_transform.origin).normalized()
 	
-	# Build desired basis manually (avoids gimbal lock entirely)
-	var desired_forward = to_target
-	var desired_right = forward_axis.cross(desired_forward).normalized()
-	if desired_right.length_squared() < 1e-4:
-		return Vector3.ZERO               # Degenerate (looking straight up/down)
-	var desired_up = desired_forward.cross(desired_right).normalized()
-	var desired_basis = Basis(desired_right, desired_up, desired_forward)
+	# Current world-space direction of the chosen local vector (unit)
+	var v_current: Vector3 = (object.global_transform.basis * Vector3.FORWARD).normalized()
 	
-	var current_quat = Quaternion(xform.basis.orthonormalized())
-	var desired_quat = Quaternion(desired_basis.orthonormalized())
-	var delta_quat = desired_quat * current_quat.inverse()
+	# Angle error
+	var dot_val: float = clamp(v_current.dot(to_target), -1.0, 1.0)
+	var angle_err: float = acos(dot_val)            # radians  (0‥π)
+	if angle_err < 1e-5:
+		return Vector3.ZERO                         # already aligned
 	
-	var axis = delta_quat.get_axis().normalized()
-	var angle = delta_quat.get_angle()
-	var raw_steer = axis * angle
+	# Rotation axis (handle the 180° anti-parallel case)
+	var axis: Vector3 = v_current.cross(to_target)
+	if axis.length_squared() < 1e-8:                # vectors are opposite
+		axis = v_current.cross(Vector3.RIGHT)
+		if axis.length_squared() < 1e-8:
+			axis = v_current.cross(Vector3.UP)
+	axis = axis.normalized()
 	
-	var current_right = xform.basis.x.normalized()
-	var yaw_component = forward_axis * raw_steer.dot(forward_axis)
-	var pitch_component = current_right * raw_steer.dot(current_right)
-	var steer_torque = yaw_component + pitch_component
+	# Proportional term (τ = k_p · θ · axis)
+	var torque_p: Vector3 = axis * angle_err * P
 	
-	var current_up = xform.basis.y.normalized()
-	var dot_up = clamp(current_up.dot(Vector3.UP), -1.0, 1.0)
+	# Derivative term (damp current spin around *any* axis)
+	var torque_d: Vector3 = -object.angular_velocity * D
 	
-	var roll_axis: Vector3
-	var roll_angle: float
-	if dot_up > 0.9999:
-		roll_axis = Vector3.ZERO
-		roll_angle = 0.0
-	elif dot_up < -0.9999:
-		roll_axis = forward_axis.normalized()
-		roll_angle = PI
-	else:
-		roll_axis = current_up.cross(Vector3.UP).normalized()
-		roll_angle = acos(dot_up)
-	
-	var roll_torque = roll_axis * roll_angle if roll_axis.length_squared() > 1e-4 else Vector3.ZERO
-	
-	return steer_torque + roll_torque
+	return torque_p + torque_d
 
 # returns vector3 torque that can be applied to an "apply_torque()" function
 # returns the "torque stuff" that will rotate an object toward a vector3
