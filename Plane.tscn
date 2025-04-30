@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://dci17n0stw0oi"]
+[gd_scene load_steps=12 format=3 uid="uid://dci17n0stw0oi"]
 
 [ext_resource type="Script" path="res://scripts/active_missile_main.gd" id="1_h581r"]
 [ext_resource type="PhysicsMaterial" uid="uid://busg2y68ds2kt" path="res://meshs/world_meshes/physics_materials/ground_hard.tres" id="1_w0ncj"]
@@ -16,9 +16,6 @@ size = Vector3(1, 2, 2.5)
 
 [sub_resource type="BoxMesh" id="BoxMesh_8evv8"]
 size = Vector3(14, 0.25, 2)
-
-[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_saeuq"]
-points = PackedVector3Array(-7, -0.125, -1, -7, 0.125, -1, 7, -0.125, -1, -7, -0.125, 1, -7, 0.125, 1, 7, 0.125, -1, 7, -0.125, 1, 7, 0.125, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_avniy"]
 size = Vector3(8, 0.25, 1.5)
@@ -47,9 +44,6 @@ mesh = SubResource("PrismMesh_8i4vb")
 
 [node name="MeshInstance3D3" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_8evv8")
-
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="."]
-shape = SubResource("ConvexPolygonShape3D_saeuq")
 
 [node name="MeshInstance3D4" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.25)

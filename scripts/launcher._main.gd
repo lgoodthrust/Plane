@@ -18,6 +18,7 @@ func load_player():
 		player_instance = player_scene.instantiate()
 		add_child(player_instance)
 		player_instance.global_position = Vector3(0, 3, 0)
+		player_instance.owner = self
 		print("Player loaded successfully!")
 	else:
 		print("Error: Player scene not assigned!")
@@ -26,7 +27,8 @@ func load_plane():
 	if plane_scene:
 		plane_instance = plane_scene.instantiate()
 		add_child(plane_instance)
-		plane_instance.global_position = Vector3(0, 3, -10)
+		plane_instance.global_position = Vector3(0, 5, -10)
+		plane_instance.owner = self
 		print("Planer loaded successfully!")
 	else:
 		print("Error: Plane scene not assigned!")

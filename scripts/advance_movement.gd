@@ -59,7 +59,7 @@ func get_offset_position(origin: Vector3, basis: Basis, local_offset: Vector3) -
 
 
 # Returns a torque vector to rotate an object so its forward axis points toward a target position
-func torque_to_position(delta: float, current_object: Node3D, current_forward_axis: Vector3, target_global_position: Vector3) -> Vector3:
+func torque_to_position(current_object: Node3D, current_forward_axis: Vector3, target_global_position: Vector3) -> Vector3:
 	var obj_pos = current_object.global_transform.origin
 	var forward_vec = current_object.global_transform.basis * current_forward_axis
 	
